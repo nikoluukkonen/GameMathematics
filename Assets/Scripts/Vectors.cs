@@ -12,7 +12,7 @@ public class Vectors : MonoBehaviour
         // Y-axis
         DrawVector(Vector3.zero, new Vector3(0, 5, 0), Color.green);
 
-        // Unit circle
+        // Unit sphere
         Gizmos.color = Color.white;
         Gizmos.DrawLine(new Vector3(-1, 0, 0), new Vector3(1, 0, 0));
         Gizmos.DrawLine(new Vector3(0, -1, 0), new Vector3(0, 1, 0));
@@ -31,4 +31,3 @@ public class Vectors : MonoBehaviour
         Handles.ConeHandleCap(0, pos + v - v.normalized * 0.35f, Quaternion.LookRotation(v), 0.5f, EventType.Repaint);
     }
 }
-
