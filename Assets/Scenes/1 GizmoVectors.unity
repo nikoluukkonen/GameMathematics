@@ -233,12 +233,12 @@ GameObject:
   - component: {fileID: 343380166}
   - component: {fileID: 343380165}
   m_Layer: 0
-  m_Name: Popup
+  m_Name: 1.2 Popup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &343380165
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -371,7 +371,7 @@ GameObject:
   - component: {fileID: 948809660}
   - component: {fileID: 948809661}
   m_Layer: 0
-  m_Name: Vectors
+  m_Name: 1.1 Vectors
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
