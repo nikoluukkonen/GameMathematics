@@ -1,5 +1,6 @@
 ﻿using UnityEditor;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 public class Vectors : MonoBehaviour
 {
@@ -24,6 +25,17 @@ public class Vectors : MonoBehaviour
     }
 
     public void DrawVector(Vector3 pos, Vector3 v, Color c)
+    {
+        Gizmos.color = c;
+        Gizmos.DrawLine(pos, pos + v);
+        Handles.color = c;
+        Handles.ConeHandleCap(0, pos + v - v.normalized * 0.35f, Quaternion.LookRotation(v), 0.5f, EventType.Repaint);
+    }
+}
+
+public static class Vector
+{
+    public static void DrawVector(Vector3 pos, Vector3 v, Color c)
     {
         Gizmos.color = c;
         Gizmos.DrawLine(pos, pos + v);

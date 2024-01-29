@@ -11,9 +11,16 @@ public class Interpolation : MonoBehaviour
 
     public float InterpTime = 5.0f;
 
+    public EasingFunction.Ease EasingSelector;
+    private EasingFunction.Function easing;
+
     private float elapsedTime = 0f;
     private float t = 0f;
 
+    private void Start()
+    {
+        easing = EasingFunction.GetEasingFunction(EasingSelector);
+    }
 
     void Update()
     {
@@ -23,7 +30,13 @@ public class Interpolation : MonoBehaviour
             elapsedTime = InterpTime;
 
         // Interpolate until InterpTime
-        t = Easing(elapsedTime / InterpTime);
+        t = elapsedTime / InterpTime;
+
+        // Clamp t
+        if (t > 1f)
+            t = 1f;
+
+        t = easing(0f, 1f, t);
 
         Vector3 pos = (1 - t) * PointA.position + t * PointB.position;
         Cube.transform.position = pos;

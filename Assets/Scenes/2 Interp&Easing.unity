@@ -783,6 +783,7 @@ MonoBehaviour:
   PointA: {fileID: 1556004908}
   PointB: {fileID: 480425832}
   InterpTime: 5
+  EasingSelector: 22
 --- !u!4 &905003828
 Transform:
   m_ObjectHideFlags: 0
