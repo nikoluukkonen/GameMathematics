@@ -4,7 +4,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
-public class Bezier : MonoBehaviour
+public class BezierCurve : MonoBehaviour
 {
     public Transform point0, point1, point2, point3;
     [Range(0f, 1f)]
@@ -12,19 +12,12 @@ public class Bezier : MonoBehaviour
 
     private Vector3 pointA, pointB, pointC, X, Y, bezier;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
     void OnDrawGizmos()
+    {
+        DrawBezier();
+    }
+
+    public void DrawBezier()
     {
         Gizmos.color = Color.white;
 
