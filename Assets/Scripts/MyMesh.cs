@@ -8,6 +8,10 @@ public class MyMesh : MonoBehaviour
     public List<int> Triangles = new();
     public List<Vector2> UVs = new();
 
+    [Range(3, 100)] public int Segments;
+    [Range(0.1f, 10f)] public float Radius1;
+    [Range(0.1f, 10f)] public float Radius2;
+
     void Start()
     {
         Vertices.Clear();
@@ -28,17 +32,17 @@ public class MyMesh : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        for (int i = 0; i < Vertices.Count; i++)
-        {
-            Gizmos.DrawSphere(Vertices[i], 0.05f);
-        }
+        //for (int i = 0; i < Vertices.Count; i++)
+        //{
+        //    Gizmos.DrawSphere(Vertices[i], 0.05f);
+        //}
     }
 
     private void GenerateMesh()
     {
         //Salmiakki();
-        //Disc(32, 2);
-        Donut(8, 1, 2);
+        //Disc();
+        Donut();
 
         Mesh mesh = new Mesh();
         mesh.SetVertices(Vertices);
@@ -62,17 +66,17 @@ public class MyMesh : MonoBehaviour
         Triangles.Add(1);
     }
 
-    private void Disc(int segments, float radius)
+    private void Disc()
     {
         Vertices.Add(Vector3.zero);
 
-        float angle = Mathf.Deg2Rad * 360 / segments;
+        float angle = Mathf.Deg2Rad * 360 / Segments;
 
-        for (int i = 0; i < segments; i++)
+        for (int i = 0; i < Segments; i++)
         {
-            Vertices.Add(new Vector3(Mathf.Cos(angle * i) * radius, Mathf.Sin(angle * i) * radius));
+            Vertices.Add(new Vector3(Mathf.Cos(angle * i) * Radius1, Mathf.Sin(angle * i) * Radius1));
         }
-        for (int i = 1; i < segments; i++)
+        for (int i = 1; i < Segments; i++)
         {
             Triangles.Add(0);
             Triangles.Add(i + 1);
@@ -80,27 +84,41 @@ public class MyMesh : MonoBehaviour
         }
         Triangles.Add(0);
         Triangles.Add(1);
-        Triangles.Add(segments);
+        Triangles.Add(Segments);
     }
 
-    private void Donut(int segments, float radiusInner, float radiusOuter)
+    private void Donut()
     {
-        float angle = Mathf.Deg2Rad * 360 / (float)segments;
-
-        for (int i = 0; i < segments; i++)
-            Vertices.Add(new Vector3(Mathf.Cos(angle * i) * radiusInner, Mathf.Sin(angle * i) * radiusInner));
-        for (int i = 0; i < segments; i++)
-            Vertices.Add(new Vector3(Mathf.Cos(angle * i) * radiusOuter, Mathf.Sin(angle * i) * radiusOuter));
-
-        for (int i = 0; i < segments -1; i++)
+        if (Radius2 < Radius1)
         {
-                Triangles.Add(i);
-                Triangles.Add(i + segments + 1);
-                Triangles.Add(i + segments);
-            
-                Triangles.Add(i);
-                Triangles.Add(i + 1);
-                Triangles.Add(i + segments +1);
+            Debug.LogError("Radius2 cannot be smaller than Radius1 for the donut to work!");
+            return;
         }
+
+        float angle = Mathf.Deg2Rad * 360 / (float)Segments;
+
+        for (int i = 0; i < Segments; i++)
+            Vertices.Add(new Vector3(Mathf.Cos(angle * i) * Radius1, Mathf.Sin(angle * i) * Radius1));
+        for (int i = 0; i < Segments; i++)
+            Vertices.Add(new Vector3(Mathf.Cos(angle * i) * Radius2, Mathf.Sin(angle * i) * Radius2));
+
+        for (int i = 0; i < Segments - 1; i++)
+        {
+            Triangles.Add(i);
+            Triangles.Add(i + Segments + 1);
+            Triangles.Add(i + Segments);
+
+            Triangles.Add(i);
+            Triangles.Add(i + 1);
+            Triangles.Add(i + Segments + 1);
+        }
+
+        Triangles.Add(Segments - 1);
+        Triangles.Add(0);
+        Triangles.Add(Segments);
+
+        Triangles.Add(Segments-1);
+        Triangles.Add(Segments);
+        Triangles.Add(Segments * 2 - 1);
     }
 }
