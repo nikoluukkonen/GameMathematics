@@ -6,6 +6,7 @@ public class MyMesh : MonoBehaviour
 {
     public List<Vector3> Vertices = new();
     public List<int> Triangles = new();
+    public List<Vector3> Normals = new();
     public List<Vector2> UVs = new();
 
     [Range(3, 100)] public int Segments;
@@ -14,23 +15,15 @@ public class MyMesh : MonoBehaviour
 
     void Start()
     {
-        Vertices.Clear();
-        Triangles.Clear();
-        UVs.Clear();
-
         GenerateMesh();
     }
 
     void OnValidate()
     {
-        Vertices.Clear();
-        Triangles.Clear();
-        UVs.Clear();
-
         GenerateMesh();
     }
 
-    private void OnDrawGizmos()
+    void OnDrawGizmos()
     {
         //for (int i = 0; i < Vertices.Count; i++)
         //{
@@ -40,13 +33,18 @@ public class MyMesh : MonoBehaviour
 
     private void GenerateMesh()
     {
-        //Salmiakki();
-        //Disc();
+        Vertices.Clear();
+        Triangles.Clear();
+        Normals.Clear();
+        UVs.Clear();
+
         Donut();
 
         Mesh mesh = new Mesh();
         mesh.SetVertices(Vertices);
         mesh.SetTriangles(Triangles, 0);
+        mesh.SetNormals(Normals);
+        mesh.SetUVs(0, UVs);
 
         GetComponent<MeshFilter>().sharedMesh = mesh;
     }
@@ -98,27 +96,32 @@ public class MyMesh : MonoBehaviour
         float angle = Mathf.Deg2Rad * 360 / (float)Segments;
 
         for (int i = 0; i < Segments; i++)
+        {
             Vertices.Add(new Vector3(Mathf.Cos(angle * i) * Radius1, Mathf.Sin(angle * i) * Radius1));
-        for (int i = 0; i < Segments; i++)
             Vertices.Add(new Vector3(Mathf.Cos(angle * i) * Radius2, Mathf.Sin(angle * i) * Radius2));
 
-        for (int i = 0; i < Segments - 1; i++)
-        {
-            Triangles.Add(i);
-            Triangles.Add(i + Segments + 1);
-            Triangles.Add(i + Segments);
+            Normals.Add(Vector3.forward);
+            Normals.Add(Vector3.forward);
 
-            Triangles.Add(i);
-            Triangles.Add(i + 1);
-            Triangles.Add(i + Segments + 1);
+            float t = i / (float)Segments;
+            UVs.Add(new Vector2(t, 0));
+            UVs.Add(new Vector2(t, 1));
         }
 
-        Triangles.Add(Segments - 1);
-        Triangles.Add(0);
-        Triangles.Add(Segments);
+        for (int i = 0; i < Segments; i++)
+        {
+            int iRoot = i * 2;
+            int iInnerRoot = iRoot + 1;
+            int iInnerNext = (iRoot + 2) % Vertices.Count;
+            int iOuterNext = (iRoot + 3) % Vertices.Count;
 
-        Triangles.Add(Segments-1);
-        Triangles.Add(Segments);
-        Triangles.Add(Segments * 2 - 1);
+            Triangles.Add(iRoot);
+            Triangles.Add(iInnerNext);
+            Triangles.Add(iOuterNext);
+
+            Triangles.Add(iRoot);
+            Triangles.Add(iOuterNext);
+            Triangles.Add(iInnerRoot);
+        }
     }
 }
