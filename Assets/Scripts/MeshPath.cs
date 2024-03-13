@@ -9,12 +9,6 @@ public class MeshPath : MonoBehaviour
 
     public bool Closed = false;
 
-    public Transform Mover;
-    private int curCurve = 0;
-    private Vector3 bezier;
-    private float T = 0;
-    private float speed = 0.001f;
-
     public List<Vector3> Vertices = new();
     public List<int> Triangles = new();
     public List<Vector3> Normals = new();
@@ -32,53 +26,27 @@ public class MeshPath : MonoBehaviour
         _GenerateMesh();
     }
 
-    void Update()
-    {
-        _CalcBezier(curCurve == Points.Count - 1);
+    //void OnDrawGizmos()
+    //{
+    //    _DrawBezier();
 
-        Mover.position = bezier;
-        T += speed;
+    //    for (int i = 0; i < Vertices.Count; ++i)
+    //    {
+    //        Gizmos.DrawSphere(Vertices[i], 0.1f);
+    //    }
+    //}
 
-        if (T >= 1)
-        {
-            T = 0;
-            curCurve++;
-            if (curCurve == Points.Count)
-                curCurve = 0;
-        }
-    }
-
-    void OnDrawGizmos()
-    {
-        _DrawBezier();
-
-        for (int i = 0; i < Vertices.Count; ++i)
-        {
-            Gizmos.DrawSphere(Vertices[i], 0.1f);
-        }
-    }
-
-    private void _DrawBezier()
-    {
-        for (int i = 1; i < Points.Count; i++)
-        {
-            Handles.DrawBezier(Points[i - 1].GetAnchorPos(), Points[i].GetAnchorPos(),
-                Points[i - 1].GetControlPos(1), Points[i].GetControlPos(0), Color.green, Texture2D.whiteTexture, 2f);
-        }
-        if (Closed)
-            Handles.DrawBezier(Points[Points.Count - 1].GetAnchorPos(), Points[0].GetAnchorPos(),
-                Points[Points.Count - 1].GetControlPos(1), Points[0].GetControlPos(0), Color.green, Texture2D.whiteTexture, 2f);
-    }
-
-    private void _CalcBezier(bool last)
-    {
-        if (!last)
-            bezier = OrientedPoint.CalculateOrientedPoint(T, Points[curCurve].GetAnchorPos(), Points[curCurve].GetControlPos(1),
-                Points[curCurve + 1].GetControlPos(0), Points[curCurve + 1].GetAnchorPos()).pos;
-        else
-            bezier = OrientedPoint.CalculateOrientedPoint(T, Points[curCurve].GetAnchorPos(), Points[curCurve].GetControlPos(1),
-                Points[0].GetControlPos(0), Points[0].GetAnchorPos()).pos;
-    }
+    //private void _DrawBezier()
+    //{
+    //    for (int i = 1; i < Points.Count; i++)
+    //    {
+    //        Handles.DrawBezier(Points[i - 1].GetAnchorPos(), Points[i].GetAnchorPos(),
+    //            Points[i - 1].GetControlPos(1), Points[i].GetControlPos(0), Color.green, Texture2D.whiteTexture, 2f);
+    //    }
+    //    if (Closed)
+    //        Handles.DrawBezier(Points[Points.Count - 1].GetAnchorPos(), Points[0].GetAnchorPos(),
+    //            Points[Points.Count - 1].GetControlPos(1), Points[0].GetControlPos(0), Color.green, Texture2D.whiteTexture, 2f);
+    //}
 
     private void _GenerateMesh()
     {
@@ -103,7 +71,7 @@ public class MeshPath : MonoBehaviour
         int segsPerCurve = Segments / Points.Count;
         int maxSegs = segsPerCurve * Points.Count;
 
-        // Vertices and normals
+        // Vertices, normals, UVs
         for (int i = 0; i < Points.Count - 1; i++)
         {
             float t = 0;
@@ -112,7 +80,7 @@ public class MeshPath : MonoBehaviour
             {
                 _AddRoadPointVertices(i, t);
 
-                t += 1 / (float)segsPerCurve;
+                t += 1 / ((float)segsPerCurve - 1);
             }
         }
         if (Closed)
@@ -123,229 +91,131 @@ public class MeshPath : MonoBehaviour
             {
                 _AddRoadPointVertices(0, t, true);
 
-                t += 1 / (float)segsPerCurve;
+                t += 1 / ((float)segsPerCurve - 1);
             }
         }
 
         // Triangles
-        for (int i = 1; i < maxSegs - segsPerCurve; i++)
-            _AddRoadPointTriangles(i * 8);
+        for (int i = 0; i < maxSegs - segsPerCurve - 1; i++)
+            _AddRoadPointTriangles(i * 16);
 
         if (Closed)
         {
-            for (int i = maxSegs - segsPerCurve; i < maxSegs; i++)
-                _AddRoadPointTriangles(i * 8);
-            _AddRoadPointTriangles(maxSegs * 8, true);
+            for (int i = maxSegs - segsPerCurve - 1; i < maxSegs - 1; i++)
+                _AddRoadPointTriangles(i * 16);
+
+            _AddRoadPointTriangles((maxSegs - 1) * 16, true);
         }
     }
 
     private void _AddRoadPointVertices(int i, float t, bool closed = false)
     {
+        OrientedPoint point;
         if (!closed)
-        {
-            OrientedPoint point = OrientedPoint.CalculateOrientedPoint(t, Points[i].GetAnchorPos(), Points[i].GetControlPos(1),
+            point = OrientedPoint.CalculateOrientedPoint(t, Points[i].GetAnchorPos(), Points[i].GetControlPos(1),
                         Points[i + 1].GetAnchorPos(), Points[i + 1].GetControlPos(0));
-
-
-            Vertices.Add(point.LocalToWorld(Vector3.right * 3));
-            Vertices.Add(point.LocalToWorld((Vector3.right * 4) + Vector3.up));
-            Vertices.Add(point.LocalToWorld((Vector3.right * 5) + Vector3.up));
-            Vertices.Add(point.LocalToWorld((Vector3.right * 5) + Vector3.down));
-
-            Vertices.Add(point.LocalToWorld((Vector3.right * -5) + Vector3.down));
-            Vertices.Add(point.LocalToWorld((Vector3.right * -5) + Vector3.up));
-            Vertices.Add(point.LocalToWorld((Vector3.right * -4) + Vector3.up));
-            Vertices.Add(point.LocalToWorld(Vector3.right * -3));
-
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-
-            float uv = i / (float)Segments;
-            UVs.Add(new Vector2(uv, 0.2f));
-            UVs.Add(new Vector2(uv, 0.1f));
-            UVs.Add(new Vector2(uv, 0));
-            UVs.Add(new Vector2(uv, 0));
-            UVs.Add(new Vector2(uv, 1));
-            UVs.Add(new Vector2(uv, 1));
-            UVs.Add(new Vector2(uv, 0.9f));
-            UVs.Add(new Vector2(uv, 0.8f));
-        }
         else
-        {
-            OrientedPoint point = OrientedPoint.CalculateOrientedPoint(t, Points[Points.Count - 1].GetAnchorPos(), Points[Points.Count - 1].GetControlPos(1),
+            point = OrientedPoint.CalculateOrientedPoint(t, Points[Points.Count - 1].GetAnchorPos(), Points[Points.Count - 1].GetControlPos(1),
                     Points[0].GetAnchorPos(), Points[0].GetControlPos(0));
 
+        Vertices.Add(point.LocalToWorld(Vector3.right * 3));
+        Vertices.Add(point.LocalToWorld(Vector3.right * 3));
+        Vertices.Add(point.LocalToWorld((Vector3.right * 4) + Vector3.up));
+        Vertices.Add(point.LocalToWorld((Vector3.right * 4) + Vector3.up));
+        Vertices.Add(point.LocalToWorld((Vector3.right * 5) + Vector3.up));
+        Vertices.Add(point.LocalToWorld((Vector3.right * 5) + Vector3.up));
+        Vertices.Add(point.LocalToWorld((Vector3.right * 5) + Vector3.down));
+        Vertices.Add(point.LocalToWorld((Vector3.right * 5) + Vector3.down));
 
-            Vertices.Add(point.LocalToWorld(Vector3.right * 3));
-            Vertices.Add(point.LocalToWorld((Vector3.right * 4) + Vector3.up));
-            Vertices.Add(point.LocalToWorld((Vector3.right * 5) + Vector3.up));
-            Vertices.Add(point.LocalToWorld((Vector3.right * 5) + Vector3.down));
+        Vertices.Add(point.LocalToWorld((Vector3.right * -5) + Vector3.down));
+        Vertices.Add(point.LocalToWorld((Vector3.right * -5) + Vector3.down));
+        Vertices.Add(point.LocalToWorld((Vector3.right * -5) + Vector3.up));
+        Vertices.Add(point.LocalToWorld((Vector3.right * -5) + Vector3.up));
+        Vertices.Add(point.LocalToWorld((Vector3.right * -4) + Vector3.up));
+        Vertices.Add(point.LocalToWorld((Vector3.right * -4) + Vector3.up));
+        Vertices.Add(point.LocalToWorld(Vector3.right * -3));
+        Vertices.Add(point.LocalToWorld(Vector3.right * -3));
 
-            Vertices.Add(point.LocalToWorld((Vector3.right * -5) + Vector3.down));
-            Vertices.Add(point.LocalToWorld((Vector3.right * -5) + Vector3.up));
-            Vertices.Add(point.LocalToWorld((Vector3.right * -4) + Vector3.up));
-            Vertices.Add(point.LocalToWorld(Vector3.right * -3));
+        Normals.Add(point.LocalToWorld(new Vector3(0, 1)));
+        Normals.Add(point.LocalToWorld(new Vector3(-0.7071f, 0.7071f)));
+        Normals.Add(point.LocalToWorld(new Vector3(-0.7071f, 0.7071f)));
+        Normals.Add(point.LocalToWorld(new Vector3(0, 1)));
+        Normals.Add(point.LocalToWorld(new Vector3(0, 1)));
+        Normals.Add(point.LocalToWorld(new Vector3(1, 0)));
+        Normals.Add(point.LocalToWorld(new Vector3(1, 0)));
+        Normals.Add(point.LocalToWorld(new Vector3(0, -1)));
 
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
-            Normals.Add(point.LocalToWorld(Vector3.forward));
+        Normals.Add(point.LocalToWorld(new Vector3(0, -1)));
+        Normals.Add(point.LocalToWorld(new Vector3(-1, 0)));
+        Normals.Add(point.LocalToWorld(new Vector3(-1, 0)));
+        Normals.Add(point.LocalToWorld(new Vector3(0, 1)));
+        Normals.Add(point.LocalToWorld(new Vector3(0, 1)));
+        Normals.Add(point.LocalToWorld(new Vector3(0.7071f, -0.7071f)));
+        Normals.Add(point.LocalToWorld(new Vector3(0.7071f, -0.7071f)));
+        Normals.Add(point.LocalToWorld(new Vector3(0, 1)));
 
-            float uv = i / (float)Segments;
-            UVs.Add(new Vector2(uv, 0.2f));
-            UVs.Add(new Vector2(uv, 0.1f));
-            UVs.Add(new Vector2(uv, 0));
-            UVs.Add(new Vector2(uv, 0));
-            UVs.Add(new Vector2(uv, 1));
-            UVs.Add(new Vector2(uv, 1));
-            UVs.Add(new Vector2(uv, 0.9f));
-            UVs.Add(new Vector2(uv, 0.8f));
-        }
+        UVs.Add(new Vector2(0.2f, t));
+        UVs.Add(new Vector2(0.2f, t));
+        UVs.Add(new Vector2(0.1f, t));
+        UVs.Add(new Vector2(0.1f, t));
+        UVs.Add(new Vector2(0.05f, t));
+        UVs.Add(new Vector2(0.05f, t));
+        UVs.Add(new Vector2(0, t));
+        UVs.Add(new Vector2(1, t));
+
+        UVs.Add(new Vector2(1f, t));
+        UVs.Add(new Vector2(1f, t));
+        UVs.Add(new Vector2(1f, t));
+        UVs.Add(new Vector2(1f, t));
+        UVs.Add(new Vector2(0.9f, t));
+        UVs.Add(new Vector2(0.9f, t));
+        UVs.Add(new Vector2(0.8f, t));
+        UVs.Add(new Vector2(0.8f, t));
     }
 
     private void _AddRoadPointTriangles(int zero, bool lastSegment = false)
     {
         if (!lastSegment)
         {
-            Triangles.Add(zero);
-            Triangles.Add(zero - 7);
-            Triangles.Add(zero - 8);
+            for (int i = 0; i < 14; i += 2)
+            {
+                Triangles.Add(zero + 1 + i);
+                Triangles.Add(zero + 17 + i);
+                Triangles.Add(zero + 2 + i);
 
-            Triangles.Add(zero);
-            Triangles.Add(zero + 1);
-            Triangles.Add(zero - 7);
+                Triangles.Add(zero + 2 + i);
+                Triangles.Add(zero + 17 + i);
+                Triangles.Add(zero + 18 + i);
+            }
 
-            Triangles.Add(zero - 6);
-            Triangles.Add(zero - 7);
-            Triangles.Add(zero + 1);
+            Triangles.Add(zero + 15);
+            Triangles.Add(zero + 31);
+            Triangles.Add(zero + 0);
 
-            Triangles.Add(zero + 1);
-            Triangles.Add(zero + 2);
-            Triangles.Add(zero - 6);
-
-            Triangles.Add(zero - 5);
-            Triangles.Add(zero - 6);
-            Triangles.Add(zero + 2);
-
-            Triangles.Add(zero + 2);
-            Triangles.Add(zero + 3);
-            Triangles.Add(zero - 5);
-
-            Triangles.Add(zero - 4);
-            Triangles.Add(zero - 5);
-            Triangles.Add(zero + 3);
-
-            Triangles.Add(zero + 3);
-            Triangles.Add(zero + 4);
-            Triangles.Add(zero - 4);
-
-            Triangles.Add(zero - 3);
-            Triangles.Add(zero - 4);
-            Triangles.Add(zero + 4);
-
-            Triangles.Add(zero + 4);
-            Triangles.Add(zero + 5);
-            Triangles.Add(zero - 3);
-
-            Triangles.Add(zero - 2);
-            Triangles.Add(zero - 3);
-            Triangles.Add(zero + 5);
-
-            Triangles.Add(zero + 5);
-            Triangles.Add(zero + 6);
-            Triangles.Add(zero - 2);
-
-            Triangles.Add(zero - 1);
-            Triangles.Add(zero - 2);
-            Triangles.Add(zero + 6);
-
-            Triangles.Add(zero + 6);
-            Triangles.Add(zero + 7);
-            Triangles.Add(zero - 1);
-
-            Triangles.Add(zero - 1);
-            Triangles.Add(zero + 7);
-            Triangles.Add(zero - 8);
-
-            Triangles.Add(zero);
-            Triangles.Add(zero - 8);
-            Triangles.Add(zero + 7);
+            Triangles.Add(zero + 0);
+            Triangles.Add(zero + 31);
+            Triangles.Add(zero + 16);
         }
         else
         {
+            for (int i = 0; i < 14; i += 2)
+            {
+                Triangles.Add(zero + 1 + i);
+                Triangles.Add(2 + i);
+                Triangles.Add(zero + 2 + i);
+
+                Triangles.Add(zero + 1 + i);
+                Triangles.Add(1 + i);
+                Triangles.Add(2 + i);
+            }
+
+            Triangles.Add(zero + 15);
+            Triangles.Add(15);
+            Triangles.Add(zero + 0);
+
+            Triangles.Add(zero + 0);
+            Triangles.Add(15);
             Triangles.Add(0);
-            Triangles.Add(zero - 7);
-            Triangles.Add(zero - 8);
-
-            Triangles.Add(0);
-            Triangles.Add(1);
-            Triangles.Add(zero - 7);
-
-            Triangles.Add(zero - 6);
-            Triangles.Add(zero - 7);
-            Triangles.Add(1);
-
-            Triangles.Add(1);
-            Triangles.Add(2);
-            Triangles.Add(zero - 6);
-
-            Triangles.Add(zero - 5);
-            Triangles.Add(zero - 6);
-            Triangles.Add(2);
-
-            Triangles.Add(2);
-            Triangles.Add(3);
-            Triangles.Add(zero - 5);
-
-            Triangles.Add(zero - 4);
-            Triangles.Add(zero - 5);
-            Triangles.Add(3);
-
-            Triangles.Add(3);
-            Triangles.Add(4);
-            Triangles.Add(zero - 4);
-
-            Triangles.Add(zero - 3);
-            Triangles.Add(zero - 4);
-            Triangles.Add(4);
-
-            Triangles.Add(4);
-            Triangles.Add(5);
-            Triangles.Add(zero - 3);
-
-            Triangles.Add(zero - 2);
-            Triangles.Add(zero - 3);
-            Triangles.Add(5);
-
-            Triangles.Add(5);
-            Triangles.Add(6);
-            Triangles.Add(zero - 2);
-
-            Triangles.Add(zero - 1);
-            Triangles.Add(zero - 2);
-            Triangles.Add(6);
-
-            Triangles.Add(6);
-            Triangles.Add(7);
-            Triangles.Add(zero - 1);
-
-            Triangles.Add(zero - 1);
-            Triangles.Add(7);
-            Triangles.Add(zero - 8);
-
-            Triangles.Add(0);
-            Triangles.Add(zero - 8);
-            Triangles.Add(7);
         }
     }
 }
@@ -373,5 +243,4 @@ public struct OrientedPoint
 
         return new(Vector3.Lerp(X, Y, t), Quaternion.LookRotation(Y - X));
     }
-
 }
