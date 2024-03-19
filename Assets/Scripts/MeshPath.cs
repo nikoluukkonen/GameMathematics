@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,6 +17,11 @@ public class MeshPath : MonoBehaviour
 
     [Range(10, 100)] public int Segments;
 
+    public Transform Mover;
+    private int curCurve = 0;
+    private Vector3 bezier;
+    private float T = 0;
+
     void Start()
     {
         _GenerateMesh();
@@ -24,6 +30,28 @@ public class MeshPath : MonoBehaviour
     void OnValidate()
     {
         _GenerateMesh();
+    }
+
+    void Update()
+    {
+        OrientedPoint point;
+        if (curCurve != Points.Count - 1)
+            point = OrientedPoint.CalculateOrientedPoint(T, Points[curCurve].GetAnchorPos(), Points[curCurve].GetControlPos(1),
+                        Points[curCurve + 1].GetAnchorPos(), Points[curCurve + 1].GetControlPos(0));
+        else
+            point = OrientedPoint.CalculateOrientedPoint(T, Points[Points.Count - 1].GetAnchorPos(), Points[Points.Count - 1].GetControlPos(1),
+                    Points[0].GetAnchorPos(), Points[0].GetControlPos(0));
+
+        Mover.SetPositionAndRotation(point.pos, point.rot);
+        T += Time.deltaTime * 0.5f;
+
+        if (T >= 1)
+        {
+            T = 0;
+            curCurve++;
+            if (curCurve == Points.Count)
+                curCurve = 0;
+        }
     }
 
     //void OnDrawGizmos()
