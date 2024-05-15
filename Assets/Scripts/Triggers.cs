@@ -36,7 +36,7 @@ public class Triggers : MonoBehaviour
 
         // Vector to NPC's look direction
         Vector.DrawVector(NPC.position, NPClookDirection.position - NPC.position, Color.magenta);
-
+        
         // Cone 
         if (Vector3.Dot((NPClookDirection.position - NPC.position).normalized, (Player.position - NPC.position).normalized) > LookRadius // Look-at-trigger
             && (Player.position - NPC.position).magnitude < (NPClookDirection.position - NPC.position).magnitude // Check if player is inside the viewing cone

@@ -43,6 +43,7 @@ public class MeshPath : MonoBehaviour
                     Points[0].GetAnchorPos(), Points[0].GetControlPos(0));
 
         Mover.SetPositionAndRotation(point.pos, point.rot);
+        //Mover.rotation = new Quaternion(-90f, Mover.rotation.y, Mover.rotation.z, Mover.rotation.w);
         T += Time.deltaTime * 0.5f;
 
         if (T >= 1)

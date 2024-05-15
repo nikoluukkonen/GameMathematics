@@ -46,7 +46,7 @@ Shader "Unlit/NewUnlitShader"
 
             sampler2D _PlainTex;
             sampler2D _MountainTex;
-            float4 _MountainTex_ST;  //  What is this?!?!?
+            float4 _MountainTex_ST;
             sampler2D _SnowTex;
             sampler2D _WaterTex;
             sampler2D _FlowTex;
